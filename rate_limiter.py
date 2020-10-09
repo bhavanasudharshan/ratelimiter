@@ -5,12 +5,18 @@ class RequestsPerUserRateLimiter:  # token based rate limiter
     USER_BUCKET_KEY = "bucket:user:requests:"
     RATE_LIMIT_KEY = "ratelimit:user:requests"
 
+    @classmethod
+    def get_max_limit(cls):
+        maxlimit = get_cache().get(RequestsPerUserRateLimiter.RATE_LIMIT_KEY)
+        if maxlimit is None:
+            return 5
+        return maxlimit  # initially all tokens are free
+
     def __init__(self):
         self.maxlimit = get_cache().get(RequestsPerUserRateLimiter.RATE_LIMIT_KEY)
         if self.maxlimit is None:
             self.maxlimit = 5
         self.bucketLimit = self.maxlimit  # initially all tokens are free
-        self.userBuckets = {}
 
     def enoughTokens(self, userId):
         v = get_cache().get(RequestsPerUserRateLimiter.USER_BUCKET_KEY + userId)
@@ -25,3 +31,4 @@ class RequestsPerUserRateLimiter:  # token based rate limiter
 
     def consumeToken(self, userId):
         get_cache().decr(RequestsPerUserRateLimiter.USER_BUCKET_KEY + userId)
+
